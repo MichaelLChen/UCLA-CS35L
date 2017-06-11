@@ -1,0 +1,47 @@
+Week 3 Homework Questions:
+
+Q1: 
+Brady removed this line because the program will not be calling 
+this label for goto statement. Maybe because of some safety
+reasons.I think it is unnecessary because the goto 
+command is removed from the program and it will
+ never be called anyway. 
+
+Q2: 
+it depends on the language that dcgettext can translate. 
+Because Brady removed long_iso_time_style, the ls command 
+will give a language that might be hard for non-native English
+speaker to adopt.
+Also, for programs that make use of that particular format might
+have some inconsistency about the month. 
+
+Q3.
+I ran it by python randline.py /dev/null
+Traceback (most recent call last):
+  File "randline.py", line 70, in <module>
+    main()
+  File "randline.py", line 64, in main
+    sys.stdout.write(generator.chooseline())
+  File "randline.py", line 34, in chooseline
+    return random.choice(self.lines)
+  File "/usr/lib64/python2.7/random.py", line 274, in choice
+    return seq[int(self.random() * len(seq))] 
+ # raises IndexError if seq is empty
+IndexError: list index out of range
+
+Because in the code, we can see an exception
+if numlines <0:
+   throw an error negative lines
+but there is no valid exception for line = 0 
+and when we open a file with 0 line 
+we have undefined behavior. 
+
+Q4. 
+There is a syntax error in line 65:
+except IOError as (errno, strerror):
+       	       	  ^ invalid syntax 
+Basically because of the difference of python3 and python2. 
+I looked it up and found python 3 does not have automatic 
+tuple unpacking which python 2 has. 
+correct form should be 
+except IOError as err:

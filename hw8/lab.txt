@@ -1,0 +1,282 @@
+Lab 8
+
+1. 
+create a trivial program 
+
+--------------cos.c----------------
+#include <stdio.h>
+#include <math.h>
+
+int main()
+{
+  printf("%.17g", cos(0.5));
+  return 0;
+}
+
+then compile it by 
+gcc cos.c -o cos
+
+2. check which dynamic library in use 
+[classhen@lnxsrv07 ~/35l/hw8]$ ldd cos
+        linux-vdso.so.1 =>  (0x00007ffcd3d26000)
+        libc.so.6 => /lib64/libc.so.6 (0x00007f40607dc000)
+        /lib64/ld-linux-x86-64.so.2 (0x00007f4060bc3000)
+
+3. strace 
+
+a) save strace to a file named t 
+strace -o t ./cos
+
+b) cat it by 
+[classhen@lnxsrv07 ~/35l/hw8]$ cat t
+execve("./cos", ["./cos"], [/* 33 vars */]) = 0
+brk(0)                                  = 0x2504000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fbbe368d000
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+open("/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=148175, ...}) = 0
+mmap(NULL, 148175, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7fbbe3668000
+close(3)                                = 0
+open("/lib64/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0@\34\2\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=2118128, ...}) = 0
+mmap(NULL, 3932672, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7fbbe30ae000
+mprotect(0x7fbbe3264000, 2097152, PROT_NONE) = 0
+mmap(0x7fbbe3464000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1b6000) = 0x7fbbe3464000
+mmap(0x7fbbe346a000, 16896, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7fbbe346a000
+close(3)                                = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fbbe3667000
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fbbe3665000
+arch_prctl(ARCH_SET_FS, 0x7fbbe3665740) = 0
+mprotect(0x7fbbe3464000, 16384, PROT_READ) = 0
+mprotect(0x600000, 4096, PROT_READ)     = 0
+mprotect(0x7fbbe368e000, 4096, PROT_READ) = 0
+munmap(0x7fbbe3668000, 148175)          = 0
+fstat(1, {st_mode=S_IFCHR|0620, st_rdev=makedev(136, 64), ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fbbe368c000
+write(1, "0.87758256189037276", 19)     = 19
+exit_group(0)                           = ?
++++ exited with 0 +++
+
+[classhen@lnxsrv07 ~/35l/hw8]$ strace -c ./cos
+0.87758256189037276% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ----------------
+ 26.97    0.000024           3         8           mmap
+ 21.35    0.000019           5         4           mprotect
+ 10.11    0.000009           5         2           open
+  8.99    0.000008           8         1           munmap
+  7.87    0.000007           7         1           write
+  5.62    0.000005           3         2           close
+  5.62    0.000005           5         1         1 access
+  4.49    0.000004           4         1           execve
+  3.37    0.000003           1         3           fstat
+  2.25    0.000002           2         1           read
+  2.25    0.000002           2         1           brk
+  1.12    0.000001           1         1           arch_prctl
+------ ----------- ----------- --------- --------- ----------------
+100.00    0.000089                    26         1 total
+
+
+c) relationship to dynamic linking 
+
+From the system call above, 
+open is to open the location of libraries 
+then fstat mgiht be to calculate the size 
+mmap is to create a map from file to memory 
+
+All we need to do is to find those files appeared in lld in those lines 
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+open("/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+open("/lib64/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+
+4. 
+My student ID is 604838709
+What I get is 
+
+[classhen@lnxsrv07 ~/35l/hw8]$ ls /usr/bin | awk 'NR%101==604838709%101'
+abrt-action-analyze-core
+aulast
+chacl
+db47_checkpoint
+dvd+rw-format
+firewall-cmd
+glxinfo64
+gtk3-demo-application
+icuinfo
+jscal
+kopete_latexconvert.sh
+libpng-config
+merge
+nf-ct-add
+opcontrol
+pecl
+pmpython
+ranlib
+sar
+smbtar
+tac
+ulockmgr_server
+x86_64-redhat-linux-c++
+xzegrep
+
+5. lld 
+write a shell script for it#! /bin/bash
+
+#! /bin/bash
+
+ALL=`ls /usr/bin | awk 'NR%101==604838709%101'`
+
+for item in $ALL
+do
+    k=`which $item`
+    echo $k
+    ldd $k
+done
+
+Then run it by 
+[classhen@lnxsrv07 ~/35l/hw8]$ ./check.sh
+/usr/bin/abrt-action-analyze-core
+        not a dynamic executable
+/usr/bin/aulast
+        linux-vdso.so.1 =>  (0x00007fffab7b0000)
+        libauparse.so.0 => /lib64/libauparse.so.0 (0x00007fb7af2d3000)
+        libaudit.so.1 => /lib64/libaudit.so.1 (0x00007fb7af0ab000)
+        libcap-ng.so.0 => /lib64/libcap-ng.so.0 (0x00007fb7aeea4000)
+        libc.so.6 => /lib64/libc.so.6 (0x00007fb7aeae3000)
+        /lib64/ld-linux-x86-64.so.2 (0x00007fb7af511000)
+/usr/bin/chacl
+        linux-vdso.so.1 =>  (0x00007ffff4f62000)
+        libacl.so.1 => /lib64/libacl.so.1 (0x00007ff63e9f9000)
+        libattr.so.1 => /lib64/libattr.so.1 (0x00007ff63e7f4000)
+        libc.so.6 => /lib64/libc.so.6 (0x00007ff63e432000)
+        /lib64/ld-linux-x86-64.so.2 (0x00007ff63ec28000)
+/usr/bin/db47_checkpoint
+        linux-vdso.so.1 =>  (0x00007ffd3cd8c000)
+        libdb-4.7.so => /usr/lib64/libdb-4.7.so (0x00007f64d1494000)
+        libpthread.so.0 => /usr/lib64/libpthread.so.0 (0x00007f64d1278000)
+        libc.so.6 => /usr/lib64/libc.so.6 (0x00007f64d0eb6000)
+        /lib64/ld-linux-x86-64.so.2 (0x00007f64d180a000)
+
+...............300 Lines ........................
+
+/usr/bin/tac
+        linux-vdso.so.1 =>  (0x00007fffe1394000)
+        libc.so.6 => /lib64/libc.so.6 (0x00007f4833460000)
+        /lib64/ld-linux-x86-64.so.2 (0x00007f4833847000)
+/usr/bin/ulockmgr_server
+        linux-vdso.so.1 =>  (0x00007ffd4792e000)
+        libpthread.so.0 => /lib64/libpthread.so.0 (0x00007fcf9fe5c000)
+        libc.so.6 => /lib64/libc.so.6 (0x00007fcf9fa9b000)
+        /lib64/ld-linux-x86-64.so.2 (0x00007fcfa02a2000)
+/usr/bin/x86_64-redhat-linux-c++
+        linux-vdso.so.1 =>  (0x00007ffccb1b5000)
+        libm.so.6 => /lib64/libm.so.6 (0x00007f5cddb1e000)
+        libc.so.6 => /lib64/libc.so.6 (0x00007f5cdd75d000)
+        /lib64/ld-linux-x86-64.so.2 (0x00007f5cdde46000)
+/usr/bin/xzegrep
+        not a dynamic executable
+
+6. get a sorted one 
+
+./check.sh > list
+
+Then by command 
+cat list | grep = |sed 's/(.*)//' | sort -u
+        libacl.so.1 => /lib64/libacl.so.1
+        libatk-1.0.so.0 => /lib64/libatk-1.0.so.0
+        libatk-bridge-2.0.so.0 => /lib64/libatk-bridge-2.0.so.0
+        libatspi.so.0 => /lib64/libatspi.so.0
+        libattr.so.1 => /lib64/libattr.so.1
+        libaudit.so.1 => /lib64/libaudit.so.1
+        libauparse.so.0 => /lib64/libauparse.so.0
+        libavahi-client.so.3 => /lib64/libavahi-client.so.3
+        libavahi-common.so.3 => /lib64/libavahi-common.so.3
+        libbfd-2.25.1-22.base.el7.so => /lib64/libbfd-2.25.1-22.base.el7.so
+        libcairo-gobject.so.2 => /lib64/libcairo-gobject.so.2
+        libcairo.so.2 => /lib64/libcairo.so.2
+        libcap-ng.so.0 => /lib64/libcap-ng.so.0
+        libcrypt.so.1 => /lib64/libcrypt.so.1
+        libc.so.6 => /lib64/libc.so.6
+        libc.so.6 => /usr/lib64/libc.so.6
+        libdb-4.7.so => /usr/lib64/libdb-4.7.so
+        libdbus-1.so.3 => /lib64/libdbus-1.so.3
+        libdl.so.2 => /lib64/libdl.so.2
+        libdrm.so.2 => /lib64/libdrm.so.2
+        libEGL.so.1 => /lib64/libEGL.so.1
+        libexpat.so.1 => /lib64/libexpat.so.1
+        libffi.so.6 => /lib64/libffi.so.6
+        libfontconfig.so.1 => /lib64/libfontconfig.so.1
+        libfreebl3.so => /lib64/libfreebl3.so
+        libfreetype.so.6 => /lib64/libfreetype.so.6
+        libgbm.so.1 => /lib64/libgbm.so.1
+        libgcc_s.so.1 => /lib64/libgcc_s.so.1
+        libgdk-3.so.0 => /lib64/libgdk-3.so.0
+        libgdk_pixbuf-2.0.so.0 => /lib64/libgdk_pixbuf-2.0.so.0
+        libgio-2.0.so.0 => /lib64/libgio-2.0.so.0
+        libglapi.so.0 => /lib64/libglapi.so.0
+        libglib-2.0.so.0 => /lib64/libglib-2.0.so.0
+        libGL.so.1 => /lib64/libGL.so.1
+        libgmodule-2.0.so.0 => /lib64/libgmodule-2.0.so.0
+        libgobject-2.0.so.0 => /lib64/libgobject-2.0.so.0
+        libgraphite2.so.3 => /lib64/libgraphite2.so.3
+        libgthread-2.0.so.0 => /lib64/libgthread-2.0.so.0
+        libgtk-3.so.0 => /lib64/libgtk-3.so.0
+        libharfbuzz.so.0 => /lib64/libharfbuzz.so.0
+        libicudata.so.50 => /lib64/libicudata.so.50
+        libicui18n.so.50 => /lib64/libicui18n.so.50
+        libicutu.so.50 => /lib64/libicutu.so.50
+        libicuuc.so.50 => /lib64/libicuuc.so.50
+        libm.so.6 => /lib64/libm.so.6
+        libnl-3.so.200 => /lib64/libnl-3.so.200
+        libnl-cli-3.so.200 => /lib64/libnl-cli-3.so.200
+        libnl-genl-3.so.200 => /lib64/libnl-genl-3.so.200
+        libnl-idiag-3.so.200 => /lib64/libnl-idiag-3.so.200
+        libnl-nf-3.so.200 => /lib64/libnl-nf-3.so.200
+        libnl-route-3.so.200 => /lib64/libnl-route-3.so.200
+        libnspr4.so => /lib64/libnspr4.so
+        libnss3.so => /lib64/libnss3.so
+        libnssutil3.so => /lib64/libnssutil3.so
+        libpango-1.0.so.0 => /lib64/libpango-1.0.so.0
+        libpangocairo-1.0.so.0 => /lib64/libpangocairo-1.0.so.0
+        libpangoft2-1.0.so.0 => /lib64/libpangoft2-1.0.so.0
+        libpcp.so.3 => /lib64/libpcp.so.3
+        libpcre.so.1 => /lib64/libpcre.so.1
+        libpixman-1.so.0 => /lib64/libpixman-1.so.0
+        libplc4.so => /lib64/libplc4.so
+        libplds4.so => /lib64/libplds4.so
+        libpng15.so.15 => /lib64/libpng15.so.15
+        libpthread.so.0 => /lib64/libpthread.so.0
+        libpthread.so.0 => /usr/lib64/libpthread.so.0
+        libresolv.so.2 => /lib64/libresolv.so.2
+        librt.so.1 => /lib64/librt.so.1
+        libsasl2.so.3 => /lib64/libsasl2.so.3
+        libselinux.so.1 => /lib64/libselinux.so.1
+        libssl3.so => /lib64/libssl3.so
+        libstdc++.so.6 => /lib64/libstdc++.so.6
+        libX11.so.6 => /lib64/libX11.so.6
+        libX11-xcb.so.1 => /lib64/libX11-xcb.so.1
+        libXau.so.6 => /lib64/libXau.so.6
+        libxcb-dri2.so.0 => /lib64/libxcb-dri2.so.0
+        libxcb-dri3.so.0 => /lib64/libxcb-dri3.so.0
+        libxcb-glx.so.0 => /lib64/libxcb-glx.so.0
+        libxcb-present.so.0 => /lib64/libxcb-present.so.0
+        libxcb-randr.so.0 => /lib64/libxcb-randr.so.0
+        libxcb-render.so.0 => /lib64/libxcb-render.so.0
+        libxcb-shape.so.0 => /lib64/libxcb-shape.so.0
+        libxcb-shm.so.0 => /lib64/libxcb-shm.so.0
+        libxcb.so.1 => /lib64/libxcb.so.1
+        libxcb-sync.so.1 => /lib64/libxcb-sync.so.1
+        libxcb-xfixes.so.0 => /lib64/libxcb-xfixes.so.0
+        libXcomposite.so.1 => /lib64/libXcomposite.so.1
+        libXcursor.so.1 => /lib64/libXcursor.so.1
+        libXdamage.so.1 => /lib64/libXdamage.so.1
+        libXext.so.6 => /lib64/libXext.so.6
+        libXfixes.so.3 => /lib64/libXfixes.so.3
+        libXinerama.so.1 => /lib64/libXinerama.so.1
+        libXi.so.6 => /lib64/libXi.so.6
+        libXrandr.so.2 => /lib64/libXrandr.so.2
+        libXrender.so.1 => /lib64/libXrender.so.1
+        libxshmfence.so.1 => /lib64/libxshmfence.so.1
+        libXxf86vm.so.1 => /lib64/libXxf86vm.so.1
+        libz.so.1 => /lib64/libz.so.1
+        linux-vdso.so.1 =>

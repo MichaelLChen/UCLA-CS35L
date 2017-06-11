@@ -1,0 +1,73 @@
+Lab 7
+Lab partner: Brian Shen
+
+1. Set up Ubuntu and OpenSSH
+
+I entered BIOS and use DVD to install Ubuntu. 
+
+After setting Ubuntu up, I install OpenSSH by
+dpkg --get-selections | grep openssh 
+but only server part is installed, 
+then I run 
+sudo apt-get install openssh-client
+to install the rest
+
+2. Setting up as a server 
+
+First I need to generate a public key by
+ssh-keygen 
+Generating public/private rsa key pair.
+Enter file in which to save the key (/home/keplerc/.ssh/id_rsa):
+Created directory '/home/keplerc/.ssh'.
+Enter passphrase (empty for no passphrase):
+Enter same passphrase again:
+Your identification has been saved in /home/keplerc/.ssh/id_rsa.
+Your public key has been saved in /home/keplerc/.ssh/id_rsa.pub.
+The key fingerprint is:
+SHA256:+kKU0LtIx9w8NGd2S5v8Ae2lND+0iPogqpqLNoiuxo8 keplerc@keplerc
+The key's randomart image is:
++---[RSA 2048]----+
+|     .       .   |
+|    . . o + + +..|
+|     + * = +.Bo=.|
+|    . B +  .=.+o.|
+|   . + .S..  . ..|
+|    . oo o    .  |
+|+    .o . o      |
+|+=o  ...   .     |
+|BE=o.  ..        |
++----[SHA256]-----+
+
+3. Setting up my partner's profile 
+
+sudo useradd -d /home/brian -m brian
+sudo passwd brian
+sudo mkdir /home/brian/.ssh
+cd /home/brian
+sudo chown -R brian .ssh
+sudo chmod 700 .ssh
+
+Then install emacs and turn off password 
+sudo apt-get install emacs
+sudo emacs /etc/ssh/sshd_config
+and change the option to no 
+
+
+4. check ip address
+ifconfig 
+and take the inet address: 10.0.2.15
+while my partner's address is 10.0.2.27
+
+5. ...wait for my partner to be client
+
+6. As a client
+First I need to copy my public key to server by 
+ssh-copy
+then add private key to authentication so that I will not 
+have to type again and again 
+
+ssh -X kepler@10.0.2.27
+then run the command $xterm 
+the window of xterm pops out
+it also works for 
+$firefox 

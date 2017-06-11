@@ -1,0 +1,102 @@
+Week 3
+-------------------------------------------------------------
+Following Brady's workaround,
+
+1. Grab Coreutils 7.6
+First, I downloaded by the link on assignment website
+wget ftp://ftp.gnu.org/gnu/coreutils/coreutils-7.6.tar.gz
+and untar it by
+tar -xf coreutils-7.6.tar.gz
+
+2. compile
+I used ./configure ./make and ./make install first.
+However, the installation was not successsful, with the error
+./install: cannot create regular file `/usr/local/bin/
+./install': Permission denied
+
+Then I tried to use --prefix flag with a relative path and ran
+into another error that the path is not recognized.
+
+Then I used absolute path
+
+./configure --prefix=/u/eng/class/classhen/35l/hw3/coreutils-7.6
+which check the details about machine before installing
+./make
+which compiles all the code and create executables
+./make intall
+put executables into final directories
+and it worked successfully
+
+3. reproduce the error
+First, check the correct version of Linux machine
+$ ls -l /bin/bash
+and end up with
+-rwxr-xr-x 1 root root 960616 Oct 17 03:05 /bin/bash
+
+To reproduce the result, first I need to change locale
+export LC_ALL='en_US.UTF-8'
+Then change directory to ./bin
+and reproduce the result by
+$ ./ls -l /bin/bash
+and the result is
+-rwxr-xr-x 1 root root 960616 2016-10-17 03:05 /bin/bash
+
+4. use emacs to reproduce Brady's patch
+emacs patch
+then copy Brady's diff file from --- to the end the website
+and tried to patch it by
+patch -p0 < patch
+but there was an error can't find file to patch at input line 10
+and make me to enter again, so I entered scr/ls.c and it worked.
+
+5. recompile
+cd src
+make
+
+with the following output
+make  all-am
+make[1]: Entering directory `/w/home.17/class/
+classhen/35l/hw3/coreutils-7.6/src'
+  CC     ls.o
+  CCLD   dir
+  CCLD   vdir
+  CCLD   ls
+make[1]: Leaving directory `/w/home.17/class/
+classhen/35l/hw3/coreutils-7.6/src'
+
+As we can see, only ls.o got recompiled by make command
+and the rest was left unchanged, because we only patched
+the ls.c.
+
+
+6.check if the bug is fixed
+then try ./ls -l /bin/bash in src and the bug is fixed
+-rwxr-xr-x 1 root root 960616 Oct 17 03:05 /bin/bash
+
+then go back to where patch file in question 4 is
+
+For a new file(I choose the patch file that I just wrote
+by emacs):
+
+cd ..
+fixed version:
+./src/ls -l ./patch
+-rw-r--r-- 1 classhen class 1052 Apr 15 18:54 ./patch
+
+unmodified version:
+./bin/ls -l ./patch
+-rw-r--r-- 1 classhen class 1052 2017-04-15 18:54 ./patch
+
+For an old file:
+I change patch's time stamp nearly two years ago(my seventeenth birthday)
+touch patch -t 1505100000
+and ls -l touch
+-rw-r--r-- 1 classhen class 1052 May 10  2015 patch
+
+fixed version:
+./src/ls -l ./patch
+-rw-r--r-- 1 classhen class 1052 May 10  2015 ./patch
+
+unmodified version:
+./bin/ls -l ./patch
+-rw-r--r-- 1 classhen class 1052 2015-05-10 00:00 ./patch

@@ -1,0 +1,91 @@
+#! /bin/bash 
+
+#initial variables set up
+
+dir=$1
+declare -a regular
+declare -i count 
+let count=0
+original="$IFS"
+IFS=$'\n'
+
+#list before change 
+#ls -a -li $dir
+
+#find all regular files 
+
+result=`find $dir -maxdepth 1 -type f|sort`
+hiddenfile=`ls -a $dir | grep '^\.'|sort`
+
+#hidden file started with . first
+for FILE in $hiddenfile
+do
+    currentDir="$FILE"
+    
+    if [ -f $currentDir ] 	
+	#silently ignore not symbolic link 
+    then
+	if [ -L $currentDir ]
+        then
+	    :
+	    #silently ignore symbolic link
+	elif [ -d $currentDir ]
+	then 
+	    :
+	    #silently ignore directory
+	elif [ ! -r $currentDir ]
+        then
+	    echo "cannot read the file $FILE"
+        else
+	    regular[$count]=$currentDir
+	    let count=count+1
+        fi
+    fi
+done
+
+for FILE in $result
+do
+    currentDir="$FILE"
+    
+    if [ -f $currentDir ] 	
+	#silently ignore not symbolic link 
+    then
+	if [ -L $currentDir ]
+        then
+	    :
+	    #silently ignore symbolic link
+	elif [ -d $currentDir ]
+	then 
+	    :
+	    #silently ignore directory
+	elif [ ! -r $currentDir ]
+        then
+	    echo "cannot read the file $FILE"
+        else
+	    regular[$count]=$currentDir
+	    let count=count+1
+            
+	fi
+    fi
+done
+
+
+#link regular files 
+for ((i=0; i<$count; i++))
+do
+    for((j=i+1; j<$count; j++)) #only search afterwards 
+    do
+	cmp -s "${regular[$i]}" "${regular[$j]}" #silient ouput
+	if [ $? -eq 0 ]
+	then	
+	    ln -f "${regular[$i]}" "${regular[$j]}"
+	    regular[$j]=regular[$i]
+	fi
+    done
+done
+
+#use ls to check the output
+#ls $dir -a -li|sort
+
+#restore IFS
+IFS=original

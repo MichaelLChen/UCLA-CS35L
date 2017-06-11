@@ -1,0 +1,140 @@
+Use the time command to compare the overall performance of sfrob, sfrobu, sfrobs, sfrobu -f, and sfrobs -f.
+
+I compile both of the C files with -O2 optimization. 
+Then use the command in the lab to create different sizes of input files 
+
+head --bytes=1000000 /dev/urandom > input_1M
+head --bytes=7000000 /dev/urandom > input_7M
+head --bytes=20000000 /dev/urandom > input_20M
+
+1. input_1M
+   a. unbuffered version
+[classhen@lnxsrv07 ~/35l/hw5/testfolder]$ time ./sfrobu < input_1M > output_sfrobu
+
+real    0m0.773s
+user    0m0.040s
+sys     0m0.727s
+
+   b.buffered version 
+[classhen@lnxsrv07 ~/35l/hw5/testfolder]$ time ./sfrob < input_1M > output_sfrobu
+
+real    0m0.243s
+user    0m0.050s
+sys     0m0.003s
+
+  c.shell script
+[classhen@lnxsrv07 ~/35l/hw5/testfolder]$ time ./sfrobs < input_1M > output_sfrobu
+
+real    0m0.025s
+user    0m0.010s
+sys     0m0.009s
+  
+  d.unbuffered -f
+[classhen@lnxsrv07 ~/35l/hw5/testfolder]$ time ./sfrobu -f < input_1M > output_sfrobu
+
+real    0m0.759s
+user    0m0.042s
+sys     0m0.711s
+
+  e.shell script -f
+[classhen@lnxsrv07 ~/35l/hw5/testfolder]$ time ./sfrobs -f < input_1M > output_sfrobu
+
+real    0m0.024s
+user    0m0.008s
+sys     0m0.010s
+  
+
+2.input_7M
+   a. unbuffered version
+[classhen@lnxsrv07 ~/35l/hw5/testfolder]$ time ./sfrobu < input_7M > output_sfrobu
+real		   0m45.917s
+user		   0m37.734s
+sys		   0m8.119s
+
+   b. buffered version
+[classhen@lnxsrv07 ~/35l/hw5/testfolder]$ time ./sfrob < input_7M > output_sfrobu
+
+real    0m0.522s
+user    0m0.320s
+sys     0m0.022s
+
+   c. shell script version
+[classhen@lnxsrv07 ~/35l/hw5/testfolder]$ time ./sfrobs < input_7M > output_sfrobs
+
+real    0m0.103s
+user    0m0.032s
+sys     0m0.034s
+
+  d. unbuffered -f
+[classhen@lnxsrv07 ~/35l/hw5/testfolder]$ time ./sfrobu -f < input_7M > output_sfrobu
+
+real		   0m46.415s
+user		   0m37.652s
+sys		   0m8.705s
+
+  e.shell script -f
+[classhen@lnxsrv07 ~/35l/hw5/testfolder]$ time ./sfrobs -f < input_7M > output_sfrobs
+
+real    0m0.113s
+user    0m0.036s
+sys     0m0.040s
+
+3. 21MB
+
+  a. buffered version
+[classhen@lnxsrv07 ~/35l/hw5/testfolder]$ time ./sfrob -f < input > output_sfrob
+
+real		   0m2.132s
+user		   0m1.406s
+sys		   0m0.510s
+
+  b. unbuffered version
+
+[classhen@lnxsrv07 ~/35l/hw5/testfolder]$ time ./sfrobu -f < input > output_sfrob
+
+real		   6m59.399s
+user		   6m29.263s
+sys		   0m29.610s
+
+**GOD IT TOOK ME SIX MINUTES**
+
+  c. shell script version
+[classhen@lnxsrv07 ~/35l/hw5/testfolder]$ time ./sfrobs < input > output_sfrobs
+
+real    0m0.352s
+user    0m0.121s
+sys     0m0.121s
+
+  d. unbuffered -f
+[classhen@lnxsrv07 ~/35l/hw5/testfolder]$ time ./sfrobu < input > output_sfrobk
+
+real    7m1.688s
+user    6m33.624s
+sys     0m27.688s
+
+**WHAT ?! ANOTHER SEVEN MINUTES **
+
+  e. shell script -f 
+
+[classhen@lnxsrv07 ~/35l/hw5/testfolder]$ time ./sfrobs -f < input > output_sfrobs
+
+real    0m0.340s
+user    0m0.124s
+sys     0m0.105s
+
+
+From the above tests on different sizes of files, I think the result is very obivous. 
+Although all of the results same to have O(nlogn)'s complexity, because of qsort algorithm 
+and probabily nlogn + 2n because programs have to read and write the file, the speed is totally different. 
+
+The shell script has fastest speed for both plain one and -f tag, because after all, the algorithm of Linux is 
+after so many interations and must be the best out of the best. the time on the system calls is shorter, but I 
+think what makes most difference is "user" part, like the implementation of the function rather than making 
+system calls. 
+
+However, the unbuffered version is totally different. 
+The time that the unbuffered version takes is so much longer than the other two. It is making so many transfers of 
+control and switch between user mode and kernel mode takes more time than doing memory allocation and sorting. 
+Because the best algorithm remains nlogn 's time complexity, we might assume linux is using qsort and the time 
+that the program takes in sorting is just in milli seconds, and we can infer most of the difference is happening 
+on system calls.

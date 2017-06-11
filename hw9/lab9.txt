@@ -1,0 +1,219 @@
+-----------LAB 9-----------------
+
+1. Get a copy of the Diffutils repository
+git clone https://git.savannah.gnu.org/git/diffutils.git
+
+2. Get a log of changes to Diffutils’ master branch using the “git log” command, and put it into the file git-log.txt.
+cd diffutils.git
+git log > git-log.txt
+
+3.Generate a list of tags used for Diffutils using the “git tag” command, and put it into the file git-tags.txt
+git tag >git-tag.txt
+
+4. Find the commit entitled “maint: quote 'like this' or "like this", not `like this'”, and generate a patch for that commit, putting it into the file quote-patch.txt.
+emacs git-log.txt
+C+S “maint: quote 'like this' or "like this", not `like this'
+Then I found 
+
+commit 62ca21c8c1a5aa3488589dcb191a4ef04ae9ed4f
+Author: Paul Eggert <eggert@cs.ucla.edu>
+Date:   Wed Jan 25 23:46:16 2012 -0800
+
+Then Generate a patch for it by command 
+git format-patch -1 62ca21c8c1a5aa3488589dcb191a4ef04ae9ed4f --stdout > quote-patch.txt
+
+5.check out v3.0
+git checkout v3.0 -b my3.0
+
+6. patch 
+patch -p1 <quote-patch.txt
+There are couple of a few files not found:
+/man/help2man
+/doc/diffutils.texi
+
+Failure
+README 9 60
+REANDME-hacking 19
+cfg.mk 29
+cmp.c 876 906 942
+diff3.c 433
+
+7. git status
+# On branch my3.0
+# Changes not staged for commit:
+#   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
+#
+#       modified:   NEWS
+#       modified:   README
+#       modified:   TODO
+#       modified:   doc/diagmeet.note
+#       modified:   ms/config.bat
+#       modified:   ms/config.site
+#       modified:   po/en.po
+#       modified:   src/analyze.c
+#       modified:   src/cmp.c
+#       modified:   src/context.c
+#       modified:   src/diff.c
+#       modified:   src/diff.h
+#       modified:   src/diff3.c
+#       modified:   src/dir.c
+#       modified:   src/ifdef.c
+#       modified:   src/io.c
+#       modified:   src/sdiff.c
+#       modified:   src/side.c
+#       modified:   src/system.h
+#       modified:   src/util.c
+#       modified:   tests/help-version
+#
+
+# Untracked files:
+#   (use "git add <file>..." to include in what will be committed)
+#
+#       NEWS.orig
+#       README-hacking.orig
+#       README-hacking.rej
+#       README.orig
+#       README.rej
+#       cfg.mk.orig
+#       cfg.mk.rej
+#       git-log.txt
+#       git-tag.txt
+#       ms/config.site.orig
+#       quote-patch.txt
+#       src.rej
+#       src/cmp.c.orig
+#       src/context.c.orig
+#       src/diff.c.orig
+#       src/diff.c.rej
+#       src/diff.h.orig
+#       src/diff3.c.orig
+#       src/diff3.c.rej
+#       src/dir.c.orig
+#       src/sdiff.c.orig
+#       src/system.h.orig
+#       src/util.c.orig
+#       tests/help-version.orig
+no changes added to commit (use "git add" and/or "git commit -a")
+
+8. 9. 
+VC-Revert is to Compare the work files in the current VC fileset with the versions you started from (vc-diff)
+VC Undo is to Revert the work file(s) in the current VC fileset to the last revision (vc-revert). 
+
+C-X v u YES on files 
+NEWS README TODO doc/diagmeet.note ms/config.bat
+ms/config.site, po/en.po, src/diff.h, src/system.h, tests/help-version
+
+C-X v = for .c files 
+for files that are all have the format '
+we can use 
+C-C C-A to undo all of them
+in src
+analyze.c 
+ifdef.c
+io.c 
+side.c
+
+For the rest of the .c files, I just look for the comments that
+contain the changes of ` and '. Use M-G G to go that that line and 
+revert the changes. 
+
+
+10. 
+cat *.c.rej > rejected
+then there will be a list of rejected file 
+emacs rejected diff.c
+C-S paginate
+and do the same for the changes in diff.c and diff3.c
+
+11
+git clean -f 
+to remove all the untracted files from working tree recursively 
+then now git status 
+[classhen@lnxsrv07 ~/35l/hw9/diffutils]$ git status
+# On branch my3.0
+# Changes not staged for commit:
+#   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
+#
+#       modified:   src/cmp.c
+#       modified:   src/context.c
+#       modified:   src/diff.c
+#       modified:   src/diff3.c
+#       modified:   src/dir.c
+#       modified:   src/sdiff.c
+#       modified:   src/side.c
+#       modified:   src/util.c
+#
+no changes added to commit (use "git add" and/or "git commit -a")
+
+12. build the patch 
+git diff > quote-3.0-patch.txt
+
+13. build 
+./bootstrap
+Then I ran into error 
+Error: 'help2man' not found
+
+Program    Min_version
+----------------------
+autoconf   2.61
+automake   1.11
+autopoint  -
+gettext    -
+git        1.4.4
+gzip       -
+help2man   -
+makeinfo   -
+perl       5.5
+rsync      -
+tar        -
+
+So I change the path by 
+PATH=/usr/local/cs/bin:$PATH
+then run ./bootstrap
+The program still fails
+then I notice that I need an additional patch 
+
+wget http://web.cs.ucla.edu/classes/spring17/cs35L/assign/diffutils-gets.diff
+patch -p0 <diffutils-gets.diff
+
+then 
+./configure
+make 
+and test if it is working by 
+
+[classhen@lnxsrv07 ~/35l/hw9/diffutils]$ ./src/diff . -
+./src/diff: cannot compare '-' to a directory
+
+[classhen@lnxsrv07 ~/35l/hw9/diffutils]$ ./src/diff --help
+...
+FILES are 'FILE1 FILE2' or 'DIR1 DIR2' or 'DIR FILE...' or 'FILE... DIR'.
+If --from-file or --to-file is given, there are no restrictions on FILES.
+If a FILE is '-', read standard input.
+Exit status is 0 if inputs are the same, 1 if different, 2 if trouble.
+
+
+The quotes are correct. 
+
+14. Sanity check
+
+cd ..
+mkdir diffutils-3.0-patch
+mkdir clone
+cd clone
+git clone ~eggert/src/gnu/diffutils
+git checkout v3.0 -b origin
+cd ..
+mkdir diffutils-3.0
+cp clone/diffutils/src/*.c diffutils-3.0/
+diffutils/src/diff -pru diffutils-3.0 diffutils-3.0-patch >quote-3.0-test.txt
+
+
+15. 
+diff quote-3.0-test.txt  quote-3.0-patch.txt
+They are not identical. 
+Maybe because of how the files are compared. 
+Because git diff is used for the patch.txt while the Linux's diff
+is used by test. As a result. for example, diff3.c and diff.c's 
+order is totally different

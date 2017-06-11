@@ -1,0 +1,107 @@
+
+1.2. Checkout 
+git checkout v3.0 -b quote
+
+
+3. patch 
+[classhen@lnxsrv07 ~/35l/hw9/another/diffutils]$ patch -p1 <quote-3.0-patch.txt 
+patching file src/cmp.c
+patching file src/diff.c
+patching file src/diff3.c
+patching file src/dir.c
+patching file src/sdiff.c
+patching file src/util.c
+
+4.5. ChangeLog
+basically, it just adds part of file as changelog to the patch 
+emacs quote-3.0-patch.txt
+C-X 4 a
+
+6. commit 
+git add .
+git commit -F ChangeLog
+F is the tag for file as message 
+
+[classhen@lnxsrv07 ~/35l/hw9/another/diffutils]$ git commit -F ChangeLog
+[quote b7513ed] 2017-05-30  Kaiyuan Chen  <classhen@lnxsrv07.seas.ucla.edu>
+ Committer: Kaiyuan Chen <classhen@lnxsrv07.seas.ucla.edu>
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly:
+
+    git config --global user.name "Your Name"
+    git config --global user.email you@example.com
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 7 files changed, 369 insertions(+), 43 deletions(-)
+ create mode 100755 quote-3.0-patch.txt
+
+7. format patch 
+git format-patch -1 --stdout >formatted-patch.txt
+
+8.my partner's patch
+
+My partner is Zipeng Fu, from Lab 3
+
+first I create branch for him
+git checkout v3.0 -b mark
+
+[classhen@lnxsrv07 ~/35l/hw9/new/test/diffutils]$ git am formatted-patch.txt
+Applying: 2017-06-02 Zipeng Fu <classfu@lnxsrv09.seas.ucla.edu>
+...
+(a lot of warnings)
+
+then install it by the way described in lab9.txt
+./bootstrap
+./configure
+make
+
+and test it also by lab9.txt
+./src/diff . -
+./src/diff --help
+and all the quotes are correct
+
+
+9.Verify my patch works
+repeat the installing procedure above and patch my own patch this time
+
+[classhen@lnxsrv07 ~/35l/hw9/new/test/diffutils]$ git am formatted-patch.txt
+Applying: 2017-05-30 Kaiyuan Chen <classhen@lnxsrv07.seas.ucla.edu>
+...(and still a lot warnings)
+make distdir
+
+enter the folder and cat the Changelog
+cd diffutils-3.0.1-22fc/
+emacs Change
+then I see my Changelog is at the top of the ChangeLog
+
+2017-06-03  Kaiyuan Chen  <classhen@lnxsrv07.seas.ucla.edu>
+
+        2017-05-30 Kaiyuan Chen <classhen@lnxsrv07.seas.ucla.edu>
+                * quote-3.0-patch.txt: Change `' to '' as quotes for string con\
+stants
+
+2010-05-03  Jim Meyering  <meyering@redhat.com>
+
+        version 3.0
+        * NEWS: Record release date.
+
+        build: update gnulib submodule to latest
+
+...
+
+10.gitk
+
+[classhen@lnxsrv07 ~/35l/hw9/another/e]$ git clone ~/eggert/src/gnu/emacs
+fatal: repository '/u/eng/class/classhen/eggert/src/gnu/emacs' does not exist
+
+so I go to the website and find 
+Anonymous clone:
+
+Emacs source repository
+git clone https://git.savannah.gnu.org/git/emacs.git
+gitk
+then the window of gitk pops up in X11

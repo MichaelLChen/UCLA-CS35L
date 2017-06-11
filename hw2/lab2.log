@@ -1,0 +1,248 @@
+
+
+----------preparation--------------
+At the beginning, I set locale using command 
+export LC_ALL='C'
+then I use comand 
+env
+to check if the export is successful 
+
+then 
+scp  /usr/share/dict/words ~/35l/hw2
+copy the file into my work directory 
+
+At first I forgot to sort the file and store it into the words file 
+just using sort is not enough, I have to store it in words
+
+Then I made another mistake 
+sort words > words 
+I cannot sort things and store it to itself, it will result in an empty file
+sort /usr/share/dict/words > words 
+
+
+then 
+wget http://web.cs.ucla.edu/classes/spring17/cs35L/assign/assign2.html
+our webpage into my work dir 
+
+
+----------different options of tr--------------
+1. cat assign2.html | tr -c 'A-Za-z' '[\n*]' 
+   will print all the English letters and and replace all other characters to
+   change of line character \n (translate complement of 'A-Za-z' to \n.
+
+2. cat assign2.html | tr -cs 'A-Za-z' '[\n*]' 
+   this command will replace each of input of repeated input 
+   listed in the complement of all English letters with a
+    single occurrance of that character. As a result, the change 
+    of line character \n will be printed only once between 
+    every output of English words.
+     Difference: no multiple change of lines 
+
+3. cat assign2.html | tr -cs 'A-Za-z' '[\n*]' | sort
+   this command will print all words multiple times following
+    alphabetical order
+  
+4. cat assign2.html | tr -cs 'A-Za-z' '[\n*]' | sort -u
+   difference between command 3: this time all words will only appear once 
+
+5. cat assign2.html | tr -cs 'A-Za-z' '[\n*]'| sort -u | comm - words 
+   by man comm, here is what I find: 
+ With no options, comm will produce three-column output.  
+      Column one contains lines unique to words unique to assign2.html,
+      column two contains lines unique to file words
+      column three contains lines common to both files.
+
+6. cat assign2.html | tr -cs 'A-Za-z' '[\n*]'| sort -u
+    | comm -23 - words
+   -23 will suppress the output of column 2 and 3
+   so it will just print out words unique to assign2.html 
+
+----------buildword shell script--------------
+#! /bin/bash
+
+#usage: ./buildwords EnglishToHawaiian.html > hwords
+
+#find all entries with English or Hawaiian spelling
+grep -o -e '<td>.*</td>'|  
+
+#remove all html tags 
+sed 's/<[^>]*>//g'|
+
+#remove all empty lines 
+sed '/^\s*$/d'|
+
+#remove all the odd $ lines(they are English letters)
+sed -n 0~2p|
+
+#transform upper case to lower case 
+tr "[:upper:]" "[:lower:]"|
+
+#transform ` to '
+tr "\`" "\'"|
+
+#all comma into a new line 
+tr ',' '\n'|
+
+#remove leading space 
+sed 's/^\s*//g'|
+
+#change misspelled English words 
+tr -cs "pk\'mnwlhaeiou[:space:]" "[\n*]"|
+
+#sort
+sort -u
+
+----------running shell commands--------------
+
+1. make .sh executable by
+   chmod +x buildwords 
+2. build hwords 
+    ./buildwords EnglishToHawaiian.html > hwords
+
+3. cat assign2.html | tr -cs 'A-Za-z' '[\n*]' | tr '[:upper:]' '[:lower:]'|
+    sort -u | comm -23 - words | wc -w 
+   At first, I found there are a lot of correct words that were counted as 
+misspelled words, because they have upper case. As a result, I translate the 
+upper to lower, and then use command wc -w to count it. 
+   My result is 38.
+
+4. Hawaiian spell checker command:
+   cat assign2.html | tr -cs "pk\'mnwlhaeiou" '[\n*]' | 
+   tr '[:upper:]' '[:lower:]'| sort -u | comm -23 - hwords | wc -w 
+   the result is 198
+ 
+5. Well... need to repeat previous steps and
+    save those misspelled words as files 
+   
+   cat assign2.html | tr -cs 'A-Za-z' '[\n*]' | tr '[:upper:]' '[:lower:]'|
+    sort -u | comm -23 - words >m_eng
+   cat assign2.html | tr -cs "pk\'mnwlhaeiou" '[\n*]' |
+    tr '[:upper:]' '[:lower:]'| sort -u | comm -23 - hwords >m_haw
+
+ 6. then compare misspelled English with Hawaiian words 
+   cat m_eng | tr -cs "pk\'mnwlhaeiou" '[\n*]' | sort -u | comm -12 
+       - hwords > m_eh
+   Examples:
+   e
+   halau
+   i
+   lau
+   po
+   wiki
+   
+7. and compare Hawaiian words in English dictionary
+   cat m_ha | tr -cs 'A-Za-z' '[\n*]' |sort -u | comm -12 - words > m_he
+
+   then append m_he to this file 
+   cat m_he >>lab2.log
+
+Examples: 
+a
+ail
+ain
+ake
+al
+ale
+alen
+all
+amine
+amp
+ample
+an
+aph
+aul
+awk
+e
+ea
+ee
+el
+em
+emp
+en
+ep
+epa
+h
+ha
+han
+hap
+he
+hei
+hell
+hem
+hen
+hi
+hin
+ho
+how
+howe
+ia
+ie
+ile
+imp
+in
+ion
+iou
+k
+keep
+kin
+l
+lan
+le
+lea
+li
+like
+line
+link
+ll
+ln
+lo
+lowe
+m
+mail
+man
+me
+men
+mi
+ml
+mo
+mp
+n
+name
+ne
+nee
+no
+non
+nu
+num
+o
+om
+on
+one
+op
+ope
+open
+owe
+own
+p
+pe
+pell
+people
+plea
+pu
+u
+ui
+ula
+ule
+ume
+ump
+un
+uni
+w
+wa
+wan
+we
+wh
+wha
+who
+wi
+wo

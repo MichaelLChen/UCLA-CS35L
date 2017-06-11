@@ -1,0 +1,159 @@
+Here are anwsers for lab questions. 
+
+
+1. man -k 
+followed by the string of that specific word 
+e.g. man -k Eggert
+I found this command by man man. 
+
+2.
+By whereis command, 
+whereis cp
+cp: 
+/bin/cp 
+/usr/share/man/man1/cp.1.gz 
+/usr/share/man/man1p/cp.1p.gz
+
+whereis wc
+wc: 
+/usr/bin/wc 
+/usr/share/man/man1/wc.1.gz 
+/usr/share/man/man1p/wc.1p.gz
+
+
+3. 
+this could be found by the command: find /usr/bin/ -name ? -executable 
+/usr/bin/[
+/usr/bin/w
+/usr/bin/X
+and what they do can be found by man command 
+
+[ - bash built-in commands 
+w - Show who is logged on and what they are doing.
+X - no manual entry for X in seasnet server, 
+but on ubuntu, it is a portable, network-transparent window system  
+
+4. 
+I use readlink /usr/bin/emacs
+and this will show its link to /etc/alternatives/emacs
+
+5. 
+man chmod to see full definition of users and specific meaning of options.
+allow group user to set user or group ID on execution.  
+remove other users who are not in user's group to execuate this file.  
+
+6. 
+man find
+then I found the modified date of find command 
+
+find .  -mtime 21
+
+7.
+man find 
+in there I found a type option -type d, which can limit find to directory 
+find . -type d -mtime -21
+
+8. 
+whereis find  #which will return the location of find
+cd /usr/bin/  #goto where the find is 
+then find . -type l
+there will be a list of files that are symbolic links 
+then I copied the names of those files into a word document(lol)
+and found there are 247 files that are symbolic links 
+
+9.
+I used two ways to do this and to make sure I am right
+What I found on lnxsrv was 
+
+drwxr-xr-x.  2 root root    4096 Jul  2  2015 jvm-commmon
+
+First way:
+ls /usr/lib -lat
+this will list the date by time and pick the oldest one
+
+The second way(although not absolutely correct):
+I first list all details of files into a file by command 
+cd usr/lib
+ls -l >~/file.txt
+then sort the txt by month
+sort -M ~/file.txt 
+then look at the year and find the earliest file that was edited 
+
+
+10.
+man locale 
+ 
+Defintion of locale: When invoked without arguments, 
+locale displays the current locale  settings for each locale category 
+(see locale(5)), based on the settings of the environment variables
+ that control the locale (see locale(7)). (copied from manual) 
+As a result, the data by locale are from setting of the environment variables. 
+
+11. 
+I used command C-h a and the search for the keyword sort, and this is what I got. 
+
+Buffer-menu-sort	      M-x ... RET
+   Sort the buffer menu by COLUMN.
+Buffer-menu-sort-by-column    M-x ... RET
+   Sort the buffer menu by the column clicked on.
+dired-sort-toggle-or-edit     M-x ... RET
+   Toggle between sort by date/name and refresh the dired buffer.
+ibuffer-invert-sorting	      M-x ... RET
+   Toggle whether or not sorting is in reverse order.
+ibuffer-toggle-sorting-mode   M-x ... RET
+   Toggle the current sorting mode.
+rmail-sort-by-author	      M-x ... RET
+   Sort messages of current Rmail buffer by author.
+rmail-sort-by-correspondent   M-x ... RET
+   Sort messages of current Rmail buffer by other correspondent.
+rmail-sort-by-date	      M-x ... RET
+   Sort messages of current Rmail buffer by "Date" header.
+rmail-sort-by-labels	      M-x ... RET
+   Sort messages of current Rmail buffer by labels.
+rmail-sort-by-lines	      M-x ... RET
+   Sort messages of current Rmail buffer by the number of lines.
+rmail-sort-by-recipient	      M-x ... RET
+   Sort messages of current Rmail buffer by recipient.
+rmail-sort-by-subject	      M-x ... RET
+   Sort messages of current Rmail buffer by "Subject" header.
+sort-columns		      M-x ... RET
+   Sort lines in region alphabetically by a certain range of columns.
+sort-fields		      M-x ... RET
+   Sort lines in region lexicographically by the ARGth field of each line.
+sort-lines		      M-x ... RET
+   Sort lines in region alphabetically; argument means descending order.
+sort-numeric-fields	      M-x ... RET
+   Sort lines in region numerically by the ARGth field of each line.
+sort-pages		      M-x ... RET
+   Sort pages in region alphabetically; argument means descending order.
+sort-paragraphs		      M-x ... RET
+   Sort paragraphs in region alphabetically; argument means descending order.
+sort-regexp-fields	      M-x ... RET
+   Sort the region lexicographically as specified by RECORD-REGEXP and KEY.
+
+
+12.
+By looking at cheatsheet and google, 
+C-M-a go to the beginning of the function
+C-M-b move backwards a sexp
+C-M-c exit from a minibuffer(or inner recursive buffer)
+c-M-d move to right of first parenthesis 
+c-M-e move to the end of defun
+c-m-f move forward to the  next sexp
+c-m-h set region of current defun
+
+13.
+this command will have a "Quit" on the lower status bar. 
+It will abort the unfinished keystrokes that previously typed in. 
+for example, if I typed in C-X by mistake, I can use C-G to recall it.
+
+14. 
+basically, it is just "paste" previously deleted text. (cut-paste) 
+
+15. 
+I noticed two differences
+
+First, emacs will have two additional lines for current and parent directory
+at the beginning
+
+Second, ls is colored in many file names while emacs does not. 

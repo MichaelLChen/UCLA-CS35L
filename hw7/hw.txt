@@ -1,0 +1,38 @@
+Homework 
+1. 
+Yes, because they do not have the private key to decode the bytes
+across the network. 
+At first, the message will be encrypted through the public key 
+of the receiver. Then the receiver sends encrypted message with 
+receiver's private key. This private key is not avaiable on the 
+network.
+Then they use session key to communicate, which is symmetric so
+that the other team cannot decode. 
+"Other team" cannot decode the message unless it has a private key. 
+
+1) It will still remain secure because key generator generates 
+private key with just random values not keyboard inputs.
+
+And session keys in the communication might be deciphered by keyboard input
+(by hash mapping), but the other team still has no idea what private key looks 
+like. Also, the case of no password login, the communication is still secure(
+even more secure if the keyboard is tapped, because in some ways
+knowing the password is not good)
+
+2)In this case, the other team will get the private key from USB.
+All the communication in the network can be deciphered using the private key.
+
+2. 
+because gpg --verify in this case just verifies the integrity of 
+the documentsand whether the data is tampered, rather than to check
+whether this is the file that I personally created. 
+Also, people can just untar it, then tarball it with a new sig file 
+and this command will still give a good signiture. 
+
+Because you are using your private key to encrypt the file while 
+giving others public key to decrypt it. There is no way to know the public key
+can match the private key.
+
+To solve this problem, it seems the best way is to go to the 
+third party, like Certificate Authority. This organization can 
+keep track of the ownership of the public key. 

@@ -1,0 +1,17 @@
+Subwindows of gitk
+
+upperleft: it is a hierarchical tree of all the commits with different branches
+and relationships.
+
+The node at first is HEAD, then what follows is local branch and then that node connects to
+remote branch master on origin, then the end of the line is commit message.
+
+uppermiddle: it is the contact information of the authors of the commit. 
+
+upperright: it is the time that the patch is committed. 
+
+middleL there is a bar of SHA of selected commit.
+
+lowerleft: it is the ChangeLog of the commit, and also comes with tools like search or diff
+
+lowerright: it is a list of files that are impacted by this commit 

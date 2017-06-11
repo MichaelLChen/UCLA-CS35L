@@ -1,0 +1,132 @@
+Lab 5
+
+------------Question 1 & 2-----------
+Knowing I need to write the Input/Output with both library
+buffered functions and system calls, I designed my program with
+composite design pattern. This design pattern allows me to 
+just change the code of IO function and leave other part unchanged. 
+
+then compile them 
+gcc tr2u.c -o tr2u
+gcc tr2b.c -o tr2c
+--------------Question 3--------------
+
+First generate a 5 000 000 bytes file by command 
+head --bytes=5000000 /dev/urandom > input
+
+then make sure 
+[classhen@lnxsrv07 ~/35l/hw5]$ ls -ls
+total 4944
+...
+4904 -rw-r--r-- 1 classhen class 5000000 Apr 30 13:05 input
+...
+
+Then I use strace command to compare system calls 
+
+A. COPY ONE FILE TO THE OTHER 
+[classhen@lnxsrv07 ~/35l/hw5]$ strace -c ./tr2b 'l' 'u' < input >output_tr2b
+% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ----------------
+ 79.13    0.001134          14        79           read
+ 11.03    0.000158           2        77           write
+  3.49    0.000050           6         9           mmap
+  1.74    0.000025           6         4           mprotect
+  1.40    0.000020           5         4           fstat
+  0.91    0.000013           7         2           open
+  0.63    0.000009           9         1           munmap
+  0.42    0.000006           3         2           close
+  0.42    0.000006           6         1         1 access
+  0.42    0.000006           6         1           execve
+  0.21    0.000003           3         1           brk
+  0.21    0.000003           3         1           arch_prctl
+------ ----------- ----------- --------- --------- ----------------
+100.00    0.001433                   182         1 total
+
+[classhen@lnxsrv07 ~/35l/hw5]$  strace -c ./tr2u 'l' 'i' < input >output_tr2u
+
+time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ----------------
+ 55.43    5.510313           1   5000000           write
+ 44.56    4.429815           1   5000002           read
+  0.00    0.000037           5         7           mmap
+  0.00    0.000027           7         4           mprotect
+  0.00    0.000014           7         2           open
+  0.00    0.000010          10         1           munmap
+  0.00    0.000008           4         2           fstat
+  0.00    0.000008           8         1           execve
+  0.00    0.000007           4         2           close
+  0.00    0.000007           7         1         1 access
+  0.00    0.000004           4         1           brk
+  0.00    0.000003           3         1           arch_prctl
+------ ----------- ----------- --------- --------- ----------------
+100.00    9.940253              10000024         1 total
+At first I thought I might run into an infinite loop, but after 
+waited so much time and I found it did take this much time,
+so result is obvious: the buffered version has less system calls
+and spend less time. 
+
+b. copy one file to the terminal 
+
+strace -c ./tr2b 'l' 'u' < input
+% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ----------------
+ 97.67    0.018073           1     20065           write
+  1.61    0.000298           4        79           read
+  0.23    0.000043           5         9           mmap
+  0.12    0.000023           6         4           mprotect
+  0.08    0.000015           8         2           open
+  0.07    0.000013           3         4           fstat
+  0.05    0.000009           9         1           munmap
+  0.04    0.000008           8         1         1 access
+  0.04    0.000007           7         1           execve
+  0.03    0.000006           3         2           close
+  0.03    0.000005           5         1           brk
+  0.02    0.000004           4         1           arch_prctl
+------ ----------- ----------- --------- --------- ----------------
+100.00    0.018504                 20170         1 total
+
+strace -c ./tr2u 'l' 'i' < input
+% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ----------------
+ 55.80    6.005084           1   5000000           write
+ 44.20    4.757125           1   5000002           read
+  0.00    0.000040           6         7           mmap
+  0.00    0.000022           6         4           mprotect
+  0.00    0.000013           7         2           open
+  0.00    0.000009           9         1           munmap
+  0.00    0.000007           4         2           close
+  0.00    0.000007           7         1         1 access
+  0.00    0.000006           3         2           fstat
+  0.00    0.000005           5         1           execve
+  0.00    0.000004           4         1           brk
+  0.00    0.000003           3         1           arch_prctl
+------ ----------- ----------- --------- --------- ----------------
+100.00   10.762325              10000024         1 total
+
+This time buffered version, although takes longer time than the 
+previous test, still outruns the unbuffered version. 
+
+------------Question 4-------------
+
+A. Copying a file into a file 
+[classhen@lnxsrv07 ~/35l/hw5]$ time ./tr2b 'kepl' 'luli' <input >output_tr2b
+
+real    0m0.299s
+user    0m0.248s
+sys     0m0.010s
+
+[classhen@lnxsrv07 ~/35l/hw5]$ time ./tr2u 'kepl' 'luli' <input >output_tr2u
+real    0m6.006s
+user    0m0.340s
+sys     0m5.621s
+
+
+B.Copying a file to the terminal
+[classhen@lnxsrv07 ~/35l/hw5]$ time ./tr2b 'kepl' 'luli' <input
+real    0m2.508s
+user    0m0.313s
+sys     0m0.072s
+[classhen@lnxsrv07 ~/35l/hw5]$ time ./tr2u 'kepl' 'luli' <input
+real    0m6.802s
+user    0m0.364s
+sys     0m5.119s

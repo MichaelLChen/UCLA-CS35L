@@ -1,0 +1,217 @@
+---------LAB 4-------------
+I did this lab with both seasnet server and my own ubuntu virtual machine
+so there might be some mismatches on the paths of files
+but I try to use the result on both machines
+
+1. Preparation
+download incorrect version of coretils
+wget http://web.cs.ucla.edu/classes/spring17/cs35L/assign/coreutils-with-bug.tar.gz
+
+untar it by
+tar -xvzf coreutils-with-bug.tar.gz
+cd coreutils-with-bug
+
+then install this version of coreutils with command
+./configure --prefix=/u/eng/class/classhen/35l/hw4/coreutils-with-bug
+make
+
+2. Renaming Patch
+we run into an error(as expected) with message
+
+In file included from utimecmp.c:41:0:
+utimens.h:2:5: error: conflicting types for 'futimens'
+ int futimens (int, char const *, struct timespec const [2]);
+     ^
+In file included from utimecmp.h:25:0,
+                 from utimecmp.c:25:
+/usr/include/sys/stat.h:373:12: note: previous declaration of 'futimens' was here
+ extern int futimens (int __fd, const struct timespec __times[2]) __THROW;
+            ^
+make[3]: *** [utimecmp.o] Error 1
+make[3]: Leaving directory `/w/home.17/class/classhen/35l/hw4/coreutils-with-bug/lib'
+make[2]: *** [all] Error 2
+make[2]: Leaving directory `/w/home.17/class/classhen/35l/hw4/coreutils-with-bug/lib'
+make[1]: *** [all-recursive] Error 1
+make[1]: Leaving directory `/w/home.17/class/classhen/35l/hw4/coreutils-with-bug'
+make: *** [all] Error 2
+
+as the error message suggests, we have naming conflict on futimens,
+so what we do in renaming patch is to replace futimens and all its occurrences with correct name.
+ Basically, this is what our renaming patch do in coreutils.diff: it changes futimens to coreutils_futimens.
+
+so I download renaming patch by
+wget http://web.cs.ucla.edu/classes/spring17/cs35L/assign/coreutils.diff
+patch -0 <coreutils.diff
+make install
+and then make again, which turned out to be successful.
+
+3. Reproducing the bug
+I copied and pasted command line by line from the spec
+kepler@kepler-VirtualBox:~/Desktop/35l/coreutils-with-bug/temp$ touch -d '1918-11-11 11:00 GMT' wwi-armistice
+kepler@kepler-VirtualBox:~/Desktop/35l/coreutils-with-bug/temp$ touch now
+kepler@kepler-VirtualBox:~/Desktop/35l/coreutils-with-bug/temp$ sleep
+kepler@kepler-VirtualBox:~/Desktop/35l/coreutils-with-bug/temp$ touch -d '1918-11-11 11:00 GMT' wwi-armistice
+kepler@kepler-VirtualBox:~/Desktop/35l/coreutils-with-bug/temp$ touch now
+kepler@kepler-VirtualBox:~/Desktop/35l/coreutils-with-bug/temp$ sleep
+
+Try correct version:
+kepler@kepler-VirtualBox:~/Desktop/35l/coreutils-with-bug/temp$ ls -lt --full-time
+total 0
+-rw-rw-r-- 1 kepler kepler 0 2017-04-26 17:23:21.688199779 -0700 now1
+-rw-rw-r-- 1 kepler kepler 0 2017-04-26 17:23:13.804259778 -0700 now
+-rw-rw-r-- 1 kepler kepler 0 1918-11-11 03:00:00.000000000 -0800 wwi-armistice
+
+Then incorrect version:
+../src/ls -lt --full-time
+-rw-rw-r-- 1 kepler kepler 0 1918-11-11 03:00:00.000000000 -0800 wwi-armistice
+-rw-rw-r-- 1 kepler kepler 0 2017-04-26 17:23:21.688199779 -0700 now1
+-rw-rw-r-- 1 kepler kepler 0 2017-04-26 17:23:13.804259778 -0700 now
+
+or on Linux Server:
+-rw-r--r-- 1 classhen class 0 2054-12-17 09:28:16.000000000 -0800 ./wwi-armistice
+-rw-r--r-- 1 classhen class 0 2017-04-27 13:34:29.612667000 -0700 ./now2
+-rw-r--r-- 1 classhen class 0 2017-04-27 13:34:14.606275000 -0700 ./now
+
+The bug is that file now1 which is 1 second past from file now has a time stamp one second before. (It takes the past as the future)
+
+
+4. use gdb to debug ls file
+gdb ./src/ls
+info functions
+I found many function names relevant to time, then I
+emacs ./src/ls.c
+to see which function really manages all the time element
+then I found a switch statement which seems to manage all
+the XXXXtime functions. I choose to break this function(sort_files)
+that triggers switch statment and all other functions that
+have a name containing "time" to see how things go.
+
+b sort_files
+b compare_ctime
+b compare_atime
+b compare_mtime
+b rev_str_mtime
+b rev_cmp_mtime
+b rev_cmp_atime
+b rev_cmp_ctime
+r -lt --full-time ./tmp/now ./tmp/now1 ./tmp/wwi-armistice
+
+set disassemble-next-line on
+maybe see how assembly works might help
+(which I later turned off, because it turned out to be not
+ helpful at all)
+
+set logging on
+just in case I missed anything
+
+to make things easier(also have more debugging information),
+I set a macro to give me information that I might need
+define n
+>s
+>info args
+>info locals
+>end
+
+and press n with ENTERs
+When I ran into a function called timespec_cmp
+
+(gdb)
+timespec_cmp (a=..., b=...) at ../lib/timespec.h:48
+48        int diff = a.tv_sec - b.tv_sec;
+a = {tv_sec = -1613826000, tv_nsec = 0}
+b = {tv_sec = 1493360706, tv_nsec = 539618688}
+diff = 0
+(gdb)
+49        return diff ? diff : a.tv_nsec - b.tv_nsec;
+a = {tv_sec = -1613826000, tv_nsec = 0}
+b = {tv_sec = 1493360706, tv_nsec = 539618688}
+diff = 1187780590
+
+the evaluation of diff : a.tv_nsec - b.tv_nsec, which should
+result in a negative number in diff, results in a positive number
+This is because the two's complement integer overflows and flips
+the sign. For example, when we #include <limit.h>, INT_MIN-1 will
+equal to INT_MAX.
+
+So what I do is to fix this overflow by avoiding substraction,
+because there is no over/under flow if you cannot change anything.
+
+(gdb) backtrace
+#0  timespec_cmp (a=..., b=...) at ../lib/timespec.h:49
+#1  0x0000000000405c47 in cmp_mtime (a=0x6191c0, b=0x619270,
+    cmp=0x405a00 <xstrcoll>) at ls.c:2880
+#2  0x0000000000405ca2 in compare_mtime (a=0x6191c0, b=0x619270)
+    at ls.c:2884
+#3  0x00007ffff7a53ab3 in msort_with_tmp.part.0 ()
+   from /lib64/libc.so.6
+#4  0x00007ffff7a53a28 in msort_with_tmp.part.0 ()
+   from /lib64/libc.so.6
+#5  0x00007ffff7a53e07 in qsort_r () from /lib64/libc.so.6
+#6  0x0000000000406425 in sort_files () at ls.c:3034
+#7  0x0000000000404847 in print_dir (name=0x61d610 ".",
+    realname=0x0, command_line_arg=true) at ls.c:2366
+#8  0x0000000000402d28 in main (argc=3, argv=0x7fffffffe358)
+    at ls.c:1301
+
+to find where the bug is
+
+then
+find . -name timespec.h
+./lib/timespec.h
+cp timespec.h ../
+
+emacs timespec.h
+C-S cmp
+
+and change the function into
+static inline int
+timespec_cmp (struct timespec a, struct timespec b)
+{
+  return  a.tv_sec > b.tv_sec ? 1 : (a.tv_sec < b.tv_sec ?
+                                     -1 : a.tv_nsec - b.tv_nsec);
+}
+
+
+5. Create a patch
+
+The create a patch with diff -u command
+diff -u coreutils-with-bug/lib/timespec.h timespec.h > coreutils-with-bug/patch.diff
+
+then use emacs to open this diff
+C-X 4 a
+and then copy and paste the ChangeLog into the patch
+
+and then add information needed to describe this change
+
+6. Test Patch
+
+patch -p0 <patch.diff
+
+then
+cd $tmp
+
+[classhen@lnxsrv07 /tmp/tmp.0fjYZhIfWC]$ /w/home.17/class/classhen/35l/hw4/coreutils-with-bug/src/ls -lt --full-time
+total 0
+-rw-r--r-- 1 classhen class 0 2017-04-27 23:25:15.823867424 -0700 now1
+-rw-r--r-- 1 classhen class 0 2017-04-27 23:25:06.539618688 -0700 now
+-rw-r--r-- 1 classhen class 0 1918-11-11 03:00:00.000000000 -0800 wwi-armistice
+
+and the result is correct
+
+7. Linux Server Question
+[classhen@lnxsrv07 ~]$ touch now
+[classhen@lnxsrv07 ~]$ sleep 1
+[classhen@lnxsrv07 ~]$ touch now1
+[classhen@lnxsrv07 ~]$ ouch -d '1918-11-11 11:00 GMT' wwi-armistice
+-bash: ouch: command not found
+[classhen@lnxsrv07 ~]$ touch -d '1918-11-11 11:00 GMT' wwi-armistice
+[classhen@lnxsrv07 ~]$ TZ=UTC0 ./35l/hw4/coreutils-with-bug/src/ls -lt --full-time wwi-armistice now now1
+-rw-r--r-- 1 classhen class 0 2054-12-17 17:28:16.000000000 +0000 wwi-armistice
+-rw-r--r-- 1 classhen class 0 2017-04-28 07:50:51.275329000 +0000 now1
+-rw-r--r-- 1 classhen class 0 2017-04-28 07:50:44.959742000 +0000 now
+
+the find the time is 2054 rather than what supposed to be 1918.
+Because timestamps represented as seconds since Unix Epoch.
+SEASnet NFS filesystem has unsigned 32-bit time stamps while local File System on Linux server has signed 64-bit time stamps.
+When it comes to the time that is negative, the number will be truncated and the sign bits(also with other bits) will be lost
+in 32-bits representation and that will give a number of second that appears to be in the future.

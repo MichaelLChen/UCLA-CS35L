@@ -117,6 +117,9 @@ int sfrob(){
     }
   }
   //free all resources
+  for(i = 0; i < count_line; i++){
+    free(buffer[i]);
+  }
   free(buffer);
   free(currentStr);
   return 0;

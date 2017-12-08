@@ -108,25 +108,35 @@ previous test, still outruns the unbuffered version.
 
 ------------Question 4-------------
 
+==========================================
+
+The "****" is supposed to be four letters [a-z] below.
+Because of my personal issue, 
+I have to change those four letters, but I don't think that really matters. 
+
+==========================================
+
+
+
 A. Copying a file into a file 
-[classhen@lnxsrv07 ~/35l/hw5]$ time ./tr2b 'kepl' 'luli' <input >output_tr2b
+[classhen@lnxsrv07 ~/35l/hw5]$ time ./tr2b 'kepl' '****' <input >output_tr2b
 
 real    0m0.299s
 user    0m0.248s
 sys     0m0.010s
 
-[classhen@lnxsrv07 ~/35l/hw5]$ time ./tr2u 'kepl' 'luli' <input >output_tr2u
+[classhen@lnxsrv07 ~/35l/hw5]$ time ./tr2u 'kepl' '****' <input >output_tr2u
 real    0m6.006s
 user    0m0.340s
 sys     0m5.621s
 
 
 B.Copying a file to the terminal
-[classhen@lnxsrv07 ~/35l/hw5]$ time ./tr2b 'kepl' 'luli' <input
+[classhen@lnxsrv07 ~/35l/hw5]$ time ./tr2b 'kepl' '****' <input
 real    0m2.508s
 user    0m0.313s
 sys     0m0.072s
-[classhen@lnxsrv07 ~/35l/hw5]$ time ./tr2u 'kepl' 'luli' <input
+[classhen@lnxsrv07 ~/35l/hw5]$ time ./tr2u 'kepl' '****' <input
 real    0m6.802s
 user    0m0.364s
 sys     0m5.119s

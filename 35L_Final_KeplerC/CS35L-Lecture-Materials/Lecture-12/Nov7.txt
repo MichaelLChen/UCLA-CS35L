@@ -1,0 +1,233 @@
+   -------------------------------------------------
+   |     CS 35L SOFTWARE CONSTRUCTION LAB          |
+   |      Stack Frame and Buffer Overflow          |
+   |            November 7, 2011                   |
+   -------------------------------------------------
+
+=== AGENDA ===========================================
+
+  1 Process Memory Region
+  2 Stack Frame
+  3 Buffer Overflow
+  4 Summary
+
+======================================================
+
+
+=== PROCESS MEMORY REGION ============================
+
+               /------------------\  lower
+Code           |                  |  memory
+Read-only data |       Text       |  addresses
+               |                  |
+               |------------------|
+static vars    |   (Initialized)  |
+               |        Data      |
+               |  (Uninitialized) |
+               |------------------|
+               |                  |
+               |       Stack      |  higher
+               |                  |  memory
+               \------------------/  addresses
+
+           Fig. 1 Process Memory Regions
+
+
+  -- What's a Stack? --
+    Stack - LIFO data structure
+    High level programs are built upon the concept of
+  stack.
+    * Procedure Calls
+    * Dynamically allocate local variables
+    * Pass parameters
+    * Return values
+
+  -- The Stack Region --
+    * Contiguous block of memory containing data
+    * The stack pointer (SP) points to top of stack
+    * Bottom of stack is at a fixed address
+    * Size is dynamically adjusted by the kernel
+    * CPU implements PUSH/POP instructions
+
+======================================================
+
+
+=== STACK FRAMES =====================================
+
+  -- Stack Frame --
+    * A logical frame of data
+    * Pushed/Popped when calling/returning a function
+    * Parameters, local vars, data necessary to recover
+      previous stack frame
+
+  -- Frame Pointer (FP) --
+    FP points to fixed location within a frame and
+  varaibles are referenced by offset to the FP.
+    When a procedure call happens, FP is stored.
+
+  -- example1.c --
+
+  void function(int a, int b, int c) {
+    int buffer1[2];
+    int buffer2[4];
+    buffer1[0] = 0;
+    buffer1[1] = a;
+    buffer2[0] = b;
+    buffer2[3] = c;
+  }
+
+  void main() {
+    function(1,2,3);
+  }
+
+  -- Compile the code into assmeblers --
+  gcc -fno-stack-protector -S -o example1.s example1.c
+
+  -- Essential of assembler code --
+
+    ~~ Inside main() ~~
+    pushl   %ebp
+    movl    %esp, %ebp
+    subl    $12, %esp
+    movl    $3, 8(%esp)
+    movl    $2, 4(%esp)
+    movl    $1, (%esp)
+    call    function
+
+    ~~ Inside function() ~~
+    pushl   %ebp
+    movl    %esp, %ebp
+    subl    $32, %esp
+    movl    $0, -8(%ebp)
+    movl    8(%ebp), %eax
+    movl    %eax, -4(%ebp)
+    movl    12(%ebp), %eax
+    movl    %eax, -24(%ebp)
+    movl    16(%ebp), %eax
+    movl    %eax, -12(%ebp)
+    leave
+
+    ~~ Instructions ~~
+    pushl - push a value into stack
+    movl - move data from one reg/mem to another
+    subl - substract the value
+    call - call function
+    leave - leave the function
+
+    ~~ Registers ~~
+    %esp: stack pointer
+    %ebp: frame pointer
+    %eax: general data registers
+
+
+  -- Stack status when "function" is called --
+  [ buffer2 ] [ buffer1 ] [fp(main)] [ret] [a] [b] [c]
+
+
+======================================================
+
+
+=== BUFFER OVERFLOW ==================================
+
+  A buffer overflow is the result of stuffing more data
+into a buffer than it can handle.
+
+  -- example2.c --
+
+  void function(char *str) {
+     char buffer[16];
+
+     strcpy(buffer,str);
+  }
+
+  void main() {
+    char large_string[256];
+    int i;
+
+    for( i = 0; i < 255; i++)
+      large_string[i] = 'A';
+
+    function(large_string);
+  }
+
+  This example will result in a `segmentation fault'!
+
+  What happened?
+
+  -- Stack status when strcpy is called --
+  [ buffer (16) ] [fp(main)][ret][*str (256)   ]
+
+  -- example3.c: change the return value --
+  void function(int a, int b, int c) {
+   int buffer1[2];
+   int buffer2[4];
+   int *ret;
+
+   ret = buffer1 + 4;
+   *ret = *ret + 8;
+  }
+
+  void main() {
+    int x;
+  
+    x = 0;
+    function(1,2,3);
+    x = 1;
+    printf("%d\n",x);
+  }
+
+  -- Figure out the hacking with gdb --
+  (gdb) info frame
+
+  -- Enough to be dangerous --
+  * We can change the return address
+  * We can write whatever code we want exploiting buffer
+    overflow security hole
+  * We can execute whatever code we want
+  * The command will be executed with the same
+    permission as the original command!
+
+======================================================
+
+=== SUMMARY ==========================================
+
+  * What is stack? What is a stack frame?
+  * How does system manipulate the stack?
+  * What is buffer overflow?
+  * How dangerous it could be?
+  * How to attack exploiting buffer overflow hole?
+
+  In next lecture, we are going to talk about how to
+prevent the problem of buffer overflow.
+
+=====================================================
+
+=== LAB 7 Getting Started ===========================
+
+  -- Add compiling flag to Makefile --
+  * create a Makefile using ./configure
+  * Edit the Makefile
+    CFLAGS = -g -fno-stack-protector ...
+
+  -- Run your lab on SEAS server --
+  * Make sure everyone uses different port
+    - Last 5 digit of your student id
+    - maximum is 65535, change your port to fit the area
+  * Make sure you kill your process after doing lab
+    ps -e | grep thttpd
+    kill <pid>
+  * Don't create more than 1 instance
+
+  -- Test your web server using command line --
+    Assume we have a server running on port 58559.
+    wget localhost:58559
+    wget will give you information like:
+
+  Connecting to localhost|127.0.0.1|:58559... connected.
+  HTTP request sent, awaiting response... 200 OK
+  Saving to: `index.html.1'
+
+    Check the content of the downloaded file. It should be
+  a html webpage.
+
+======================================================

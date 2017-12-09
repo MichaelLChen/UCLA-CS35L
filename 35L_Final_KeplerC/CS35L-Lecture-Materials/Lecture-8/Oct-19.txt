@@ -1,0 +1,193 @@
+   -------------------------------------------------
+   |     CS 35L SOFTWARE CONSTRUCTION LAB          |
+   |     Introduction to GIT Version Control       |
+   |           October 19, 2011                    |
+   -------------------------------------------------
+
+=== AGENDA ===========================================
+  0 More About Diff File Format
+  1 Introduction to Git
+  2 Introduction to GitHub
+  3 Student Presentation
+  4 Next Lecture
+======================================================
+
+
+
+== More About Diff File Format =======================
+
+  -- An Anatonomy of Unified File Format --
+
+    diff -p -u -r1.134 rm.c
+    --- src/rm.c    14 May 2005 07:58:37 -0000
+    +++ src/rm.c    29 Aug 2005 21:11:54 -0000
+    @@ -51,7 +51,9 @@
+     #include "system.h"
+     #include "dirname.h"
+     #include "error.h"
+    +#include "lstat.h"
+     #include "quote.h"
+    +#include "quotearg.h"
+     #include "remove.h"
+     #include "root-dev-ino.h"
+
+    @@ -95,6 +97,33 @@ static struct option const long_opts[] =
+    Line 1: the diff command create this file
+    Line 2,3: file names and time stamps
+    Line 4: Range of file
+      * -/+ indicates from/to file
+      * first number indicates starting line of hunk
+      * second number indicates the length of hunk
+    Starting from line 5 until next "@@":
+      the content of hunk
+
+  -- Hints when modifying diff file --
+    * Don't change the file names
+    * Make sure the line numbers are correct
+    * Make minimal change as possible
+
+======================================================
+
+
+== Introduction to Git ===============================
+
+  -- Taxonomy of Version Control Systems --
+
+    * Local Version Control Systems
+      Local database keeps tracks of history of files.
+      e.g. Revision history of Google docs
+
+    * Centralized Version Control Systems
+      Put all the files on central server and clients
+      sync with the server.
+      e.g. Subversion, CVS
+
+    * Distributed Version Control Systems
+      Clients don't just check out latest snapshot, but
+      fully mirror the repository.
+      e.g. Git, Mercurial, Bazaars etc.
+
+
+  -- History of Git --
+    * Linux kernel developmentn requires a DVCS
+    * BitKeeper, a commercial software
+    * Linus Torvalds decide to build a free version
+    * Git is born in 2005
+
+
+  -- Three States of Git --
+
+    working  | staging | repository
+         <----------Checkout--
+       ---Stage-->
+                  ---Commit-->
+
+
+  -- Basic Workflow --
+    * Change the files in working directory
+    * Stage the changed files
+    * Do a commit into repository
+
+
+
+-- Git Cheat Sheet -----------------------------------
+
+  -- Install Git --
+    * apt-get install git-core
+
+  -- Setup Git --
+    $ git config --global user.name "John Doe"
+    $ git config --global user.email johndoe@example.com
+    $ git config --global core.editor emacs
+    $ git config --global merge.tool vimdiff
+
+    $ git config --list
+
+  -- Initialize a repository --
+      # Go to the project's directory
+    $ git init
+      # Add files (stage them) --
+    $ git add *.c
+    $ git add README
+      # Commit the changes
+    $ git commit -m 'Initial project checkin'
+
+  -- Clone an existing repository --
+    $ git clone <git-address>
+
+  -- Checking status --
+    $ git status
+
+  -- Committing all changed files (skip staging) --
+    $ git commit -a -m "first commit"
+
+  -- Revert your changes --
+    $ git reset --hard
+
+  -- View changes --
+    $ git diff <file>
+
+  -- Add a remote repository --
+    $ git remote add <remotename> <git-addr>
+
+  -- Push to a remote repository --
+    $ git push <remotename>
+
+  -- Update from a remote repository --
+    $ git pull
+-------------------------------------------------------
+
+-- Git Branch -----------------------------------------
+
+  -- Create a branch --
+    $ git branch iss53 # create a branch issue 53
+
+  -- Check out a branch --
+    $ git checkout -b iss53 # checkout a new branch issue 53
+
+  After commit, your branch will have a new snapshot
+
+  -- Merge branches --
+    $ git chekcout master
+    $ git merge iss53 # merge iss53 with master branch
+
+  -- See last commit of each branch --
+    $ git branch -v
+
+-------------------------------------------------------
+
+More information, see http://progit.org/book/
+
+=======================================================
+
+
+== INTRODUCTION TO GITHUB =============================
+
+  -- Setting up GitHub --
+  http://help.github.com/linux-set-up-git/
+
+  -- SSH Pub Keys --
+    In order to use GitHub on your machine, you need update
+  Your SSH key to GitHub.
+
+    -- Generate an SSH Key --
+    $ ssh-keygen -t rsa -C <your-email>
+    <Press Enter three times>
+
+    -- Upload to Git --
+    Account Settings > SSH Public Keys > Add another pub key
+
+    -- Test connection --
+    ssh -T git@github.com
+
+  -- Create new repository --
+  http://help.github.com/create-a-repo/
+
+=======================================================
+
+
+== Next Lecture =======================================
+  1 Introduction to C
+  2 C compilation and linking process
+  3 Debugging with C
+=======================================================
